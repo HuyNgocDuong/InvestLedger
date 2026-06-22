@@ -1,0 +1,10 @@
+/.idea/
+/.vscode/
+/api/target/
+*.log
+*.local
+*.dcu
+*.identcache
+*.dproj.local
+*.exe
+*.~*

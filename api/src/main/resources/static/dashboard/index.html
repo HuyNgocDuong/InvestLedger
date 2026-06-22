@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>InvestLedger — Adviser Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    /* Design tokens + InvestLedger fintech extensions */
+    :root {
+      --primary: #f54e00;
+      --primary-active: #d04200;
+      --ink: #26251e;
+      --body: #5a5852;
+      --muted: #807d72;
+      --hairline: #e6e5e0;
+      --hairline-soft: #efeee8;
+      --canvas: #f7f7f4;
+      --canvas-soft: #fafaf7;
+      --surface-card: #ffffff;
+      --on-primary: #ffffff;
+      --profit: #1f8a65;
+      --loss: #cf2d56;
+      --radius-md: 8px;
+      --radius-lg: 12px;
+      --space-sm: 12px;
+      --space-base: 16px;
+      --space-lg: 24px;
+      --font: 'Inter', system-ui, 'Helvetica Neue', Arial, sans-serif;
+      --mono: 'JetBrains Mono', 'Fira Code', monospace;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: var(--font);
+      font-size: 16px;
+      line-height: 1.5;
+      color: var(--ink);
+      background: var(--canvas);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .top-nav {
+      height: 64px;
+      padding: 0 var(--space-lg);
+      display: flex;
+      align-items: center;
+      gap: var(--space-base);
+      border-bottom: 1px solid var(--hairline);
+      background: var(--canvas);
+      flex-wrap: wrap;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-right: auto;
+    }
+
+    .brand-mark {
+      width: 28px;
+      height: 28px;
+      border-radius: var(--radius-md);
+      background: linear-gradient(135deg, var(--primary), #ff8c42);
+    }
+
+    .brand h1 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+    }
+
+    .brand span {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .control-group {
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+      flex-wrap: wrap;
+    }
+
+    label.field-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    input, select {
+      font-family: var(--font);
+      font-size: 14px;
+      height: 40px;
+      padding: 0 14px;
+      border: 1px solid var(--hairline);
+      border-radius: var(--radius-md);
+      background: var(--surface-card);
+      color: var(--ink);
+    }
+
+    input:focus, select:focus {
+      outline: 2px solid rgba(245, 78, 0, 0.25);
+      border-color: var(--primary);
+    }
+
+    .btn-primary {
+      font-family: var(--font);
+      font-size: 14px;
+      font-weight: 500;
+      height: 40px;
+      padding: 0 18px;
+      border: none;
+      border-radius: var(--radius-md);
+      background: var(--primary);
+      color: var(--on-primary);
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .btn-primary:hover { background: var(--primary-active); }
+
+    #status {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    main {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: var(--space-lg);
+      display: grid;
+      grid-template-columns: 300px 1fr;
+      gap: var(--space-lg);
+      align-items: start;
+    }
+
+    .panel {
+      background: var(--surface-card);
+      border: 1px solid var(--hairline);
+      border-radius: var(--radius-lg);
+      padding: var(--space-lg);
+    }
+
+    .section-title {
+      margin: 0 0 var(--space-base);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .section-heading {
+      margin: var(--space-lg) 0 var(--space-sm);
+      font-size: 18px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+    }
+
+    .section-heading:first-of-type { margin-top: 0; }
+
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: var(--space-sm);
+      margin-bottom: var(--space-lg);
+    }
+
+    .metric {
+      background: var(--canvas-soft);
+      border: 1px solid var(--hairline-soft);
+      border-radius: var(--radius-md);
+      padding: 14px 16px;
+    }
+
+    .metric label {
+      display: block;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .metric strong {
+      font-family: var(--mono);
+      font-size: 1.15rem;
+      font-weight: 500;
+      letter-spacing: -0.02em;
+    }
+
+    .metric strong.positive { color: var(--profit); }
+    .metric strong.negative { color: var(--loss); }
+
+    .list-item {
+      padding: 12px 14px;
+      border-radius: var(--radius-md);
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: background 0.12s, border-color 0.12s;
+    }
+
+    .list-item:hover { background: var(--canvas-soft); }
+
+    .list-item.active {
+      background: var(--canvas-soft);
+      border-color: var(--hairline);
+    }
+
+    .list-item .name {
+      font-weight: 600;
+      font-size: 15px;
+    }
+
+    .list-item .email {
+      font-size: 13px;
+      color: var(--body);
+      margin-top: 2px;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--hairline-soft);
+      border-radius: var(--radius-md);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    th {
+      text-align: left;
+      padding: 10px 14px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+      background: var(--canvas-soft);
+      border-bottom: 1px solid var(--hairline);
+    }
+
+    td {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--hairline-soft);
+      color: var(--ink);
+    }
+
+    tr:last-child td { border-bottom: none; }
+
+    tbody tr.clickable:hover { background: var(--canvas-soft); cursor: pointer; }
+
+    .num { font-family: var(--mono); font-size: 13px; }
+
+    .positive { color: var(--profit); }
+    .negative { color: var(--loss); }
+
+    .badge {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      padding: 3px 8px;
+      border-radius: 9999px;
+      background: var(--hairline-soft);
+      color: var(--ink);
+    }
+
+    .badge.buy { background: #e8f5ee; color: var(--profit); }
+    .badge.sell { background: #fdeef2; color: var(--loss); }
+    .badge.deposit { background: #eef4fc; color: #3b6ea8; }
+    .badge.active { background: #e8f5ee; color: var(--profit); }
+
+    .alloc-bar {
+      height: 6px;
+      background: var(--hairline-soft);
+      border-radius: 9999px;
+      overflow: hidden;
+      margin-top: 4px;
+      min-width: 60px;
+    }
+
+    .alloc-bar span {
+      display: block;
+      height: 100%;
+      background: var(--primary);
+      border-radius: 9999px;
+    }
+
+    .error {
+      margin-top: var(--space-base);
+      padding: 12px 14px;
+      border-radius: var(--radius-md);
+      background: #fdeef2;
+      color: var(--loss);
+      font-size: 14px;
+      border: 1px solid #f5c4cf;
+    }
+
+    @media (max-width: 960px) {
+      main { grid-template-columns: 1fr; }
+      .top-nav { height: auto; padding: var(--space-base); }
+    }
+  </style>
+</head>
+<body>
+  <nav class="top-nav">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true"></div>
+      <div>
+        <h1>InvestLedger</h1>
+        <span>Adviser dashboard</span>
+      </div>
+    </div>
+    <div class="control-group">
+      <label class="field-label" for="apiKey">API key</label>
+      <input id="apiKey" type="password" placeholder="X-API-Key" value="dev-investledger-key" />
+      <label class="field-label" for="adviserId">Adviser</label>
+      <select id="adviserId">
+        <option value="">All investors (admin)</option>
+        <option value="1">Alice Chen</option>
+        <option value="2">Michael Nguyen</option>
+      </select>
+      <button class="btn-primary" onclick="loadInvestors()">Refresh</button>
+      <span id="status"></span>
+    </div>
+  </nav>
+
+  <main>
+    <section class="panel">
+      <p class="section-title">Client book</p>
+      <div id="investors"></div>
+    </section>
+
+    <section class="panel">
+      <div class="summary" id="summary"></div>
+
+      <h2 class="section-heading" id="portfolioTitle">Portfolios</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th><th>CCY</th><th>Status</th>
+              <th>Value</th><th>Cash</th><th>P/L</th>
+            </tr>
+          </thead>
+          <tbody id="portfolios"></tbody>
+        </table>
+      </div>
+
+      <h2 class="section-heading">Holdings</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Symbol</th><th>Name</th><th>Qty</th>
+              <th>Avg cost</th><th>Value</th><th>Weight</th>
+            </tr>
+          </thead>
+          <tbody id="holdings"></tbody>
+        </table>
+      </div>
+
+      <h2 class="section-heading">Recent transactions</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th><th>Type</th><th>Instrument</th>
+              <th>Qty</th><th>Net</th><th>Notes</th>
+            </tr>
+          </thead>
+          <tbody id="transactions"></tbody>
+        </table>
+      </div>
+
+      <div id="error" class="error" style="display:none"></div>
+    </section>
+  </main>
+
+  <script>
+    const baseUrl = '';
+    let selectedInvestorId = null;
+
+    function headers() {
+      const h = { 'X-API-Key': document.getElementById('apiKey').value };
+      const adviserId = document.getElementById('adviserId').value;
+      if (adviserId) h['X-Adviser-Id'] = adviserId;
+      return h;
+    }
+
+    async function api(path) {
+      const res = await fetch(baseUrl + path, { headers: headers() });
+      if (!res.ok) throw new Error(`${path} failed (${res.status})`);
+      if (res.status === 204) return null;
+      return res.json();
+    }
+
+    function money(v) {
+      return Number(v || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function pnlClass(v) {
+      const n = Number(v || 0);
+      if (n > 0) return 'positive';
+      if (n < 0) return 'negative';
+      return '';
+    }
+
+    function showError(msg) {
+      const el = document.getElementById('error');
+      el.textContent = msg;
+      el.style.display = msg ? 'block' : 'none';
+    }
+
+    function txnBadge(type) {
+      const t = (type || '').toLowerCase();
+      const cls = ['buy', 'sell', 'deposit'].includes(t) ? t : '';
+      return `<span class="badge ${cls}">${type}</span>`;
+    }
+
+    async function loadInvestors() {
+      showError('');
+      document.getElementById('status').textContent = 'Loading…';
+      try {
+        const investors = await api('/api/investors');
+        const container = document.getElementById('investors');
+        container.innerHTML = '';
+        investors.forEach(inv => {
+          const div = document.createElement('div');
+          div.className = 'list-item';
+          div.innerHTML = `<div class="name">${inv.firstName} ${inv.lastName}</div><div class="email">${inv.email}</div>`;
+          div.onclick = () => selectInvestor(inv.id, div);
+          container.appendChild(div);
+        });
+        document.getElementById('status').textContent = `${investors.length} investor${investors.length === 1 ? '' : 's'}`;
+        if (investors.length) selectInvestor(investors[0].id, container.firstChild);
+      } catch (e) {
+        showError(e.message);
+        document.getElementById('status').textContent = '';
+      }
+    }
+
+    async function selectInvestor(id, el) {
+      showError('');
+      selectedInvestorId = id;
+      document.querySelectorAll('.list-item').forEach(n => n.classList.remove('active'));
+      if (el) el.classList.add('active');
+      try {
+        const summary = await api(`/api/investors/${id}/summary`);
+        const pnlCls = pnlClass(summary.unrealizedPnl);
+        document.getElementById('summary').innerHTML = `
+          <div class="metric"><label>Total value</label><strong class="num">$${money(summary.totalMarketValue)}</strong></div>
+          <div class="metric"><label>Cost basis</label><strong class="num">$${money(summary.totalCost)}</strong></div>
+          <div class="metric"><label>Unrealized P/L</label><strong class="num ${pnlCls}">$${money(summary.unrealizedPnl)}</strong></div>
+          <div class="metric"><label>Cash</label><strong class="num">$${money(summary.cashBalance)}</strong></div>`;
+
+        const portfolios = await api(`/api/investors/${id}/portfolios`);
+        const tbody = document.getElementById('portfolios');
+        tbody.innerHTML = '';
+        for (const p of portfolios) {
+          const s = await api(`/api/portfolios/${p.id}/summary`);
+          const tr = document.createElement('tr');
+          tr.className = 'clickable';
+          const statusBadge = p.status === 'ACTIVE' ? 'badge active' : 'badge';
+          tr.innerHTML = `
+            <td><strong>${p.name}</strong></td>
+            <td>${p.currency}</td>
+            <td><span class="${statusBadge}">${p.status}</span></td>
+            <td class="num">$${money(s.totalMarketValue)}</td>
+            <td class="num">$${money(s.cashBalance)}</td>
+            <td class="num ${pnlClass(s.unrealizedPnl)}">$${money(s.unrealizedPnl)}</td>`;
+          tr.onclick = () => loadPortfolio(p.id, p.name, s);
+          tbody.appendChild(tr);
+        }
+        if (portfolios.length) loadPortfolio(portfolios[0].id, portfolios[0].name);
+        else {
+          document.getElementById('holdings').innerHTML = '';
+          document.getElementById('transactions').innerHTML = '';
+        }
+      } catch (e) {
+        showError(e.message);
+      }
+    }
+
+    async function loadPortfolio(id, name, summary) {
+      showError('');
+      document.getElementById('portfolioTitle').textContent = name;
+      try {
+        if (!summary) summary = await api(`/api/portfolios/${id}/summary`);
+        const holdings = await api(`/api/portfolios/${id}/holdings`);
+        const txns = await api(`/api/portfolios/${id}/transactions`);
+        const alloc = summary.allocations || [];
+
+        const hbody = document.getElementById('holdings');
+        hbody.innerHTML = '';
+        holdings.forEach(h => {
+          const a = alloc.find(x => x.symbol === h.instrumentSymbol);
+          const weight = a ? Number(a.weightPercent) : 0;
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td><strong>${h.instrumentSymbol}</strong></td>
+            <td>${h.instrumentName}</td>
+            <td class="num">${h.quantity}</td>
+            <td class="num">$${money(h.averageCost)}</td>
+            <td class="num">$${money(h.marketValue)}</td>
+            <td>
+              <span class="num">${weight ? weight.toFixed(1) + '%' : '—'}</span>
+              <div class="alloc-bar"><span style="width:${Math.min(weight, 100)}%"></span></div>
+            </td>`;
+          hbody.appendChild(tr);
+        });
+
+        const tbody = document.getElementById('transactions');
+        tbody.innerHTML = '';
+        txns.slice(0, 15).forEach(t => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td class="num">${t.tradeDate}</td>
+            <td>${txnBadge(t.transactionType)}</td>
+            <td class="num">#${t.instrumentId}</td>
+            <td class="num">${t.quantity}</td>
+            <td class="num">$${money(t.netAmount)}</td>
+            <td>${t.notes || ''}</td>`;
+          tbody.appendChild(tr);
+        });
+      } catch (e) {
+        showError(e.message);
+      }
+    }
+
+    loadInvestors();
+  </script>
+</body>
+</html>
