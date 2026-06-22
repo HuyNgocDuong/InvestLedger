@@ -264,6 +264,7 @@
     tr:last-child td { border-bottom: none; }
 
     tbody tr.clickable:hover { background: var(--canvas-soft); cursor: pointer; }
+    tbody tr.clickable.selected { background: var(--canvas-soft); outline: 2px solid rgba(245, 78, 0, 0.2); }
 
     .num { font-family: var(--mono); font-size: 13px; }
 
@@ -332,7 +333,7 @@
       <label class="field-label" for="apiKey">API key</label>
       <input id="apiKey" type="password" placeholder="X-API-Key" value="" />
       <label class="field-label" for="adviserId">Adviser</label>
-      <select id="adviserId">
+      <select id="adviserId" onchange="onAdviserChange()">
         <option value="">All investors (admin)</option>
         <option value="1">Alice Chen</option>
         <option value="2">Michael Nguyen</option>
@@ -397,6 +398,13 @@
   <script>
     const baseUrl = '';
     let selectedInvestorId = null;
+    let selectedPortfolioId = null;
+
+    function onAdviserChange() {
+      selectedInvestorId = null;
+      selectedPortfolioId = null;
+      loadInvestors();
+    }
 
     function headers() {
       const h = { 'X-API-Key': document.getElementById('apiKey').value };
@@ -450,7 +458,21 @@
           container.appendChild(div);
         });
         document.getElementById('status').textContent = `${investors.length} investor${investors.length === 1 ? '' : 's'}`;
-        if (investors.length) selectInvestor(investors[0].id, container.firstChild);
+        if (investors.length) {
+          const keep = investors.find(inv => inv.id === selectedInvestorId);
+          const target = keep || investors[0];
+          const items = container.querySelectorAll('.list-item');
+          const index = investors.findIndex(inv => inv.id === target.id);
+          selectInvestor(target.id, items[index]);
+        } else {
+          selectedInvestorId = null;
+          selectedPortfolioId = null;
+          document.getElementById('summary').innerHTML = '';
+          document.getElementById('portfolios').innerHTML = '';
+          document.getElementById('holdings').innerHTML = '';
+          document.getElementById('transactions').innerHTML = '';
+          document.getElementById('portfolioTitle').textContent = 'Portfolios';
+        }
       } catch (e) {
         showError(e.message);
         document.getElementById('status').textContent = '';
@@ -459,6 +481,7 @@
 
     async function selectInvestor(id, el) {
       showError('');
+      if (selectedInvestorId !== id) selectedPortfolioId = null;
       selectedInvestorId = id;
       document.querySelectorAll('.list-item').forEach(n => n.classList.remove('active'));
       if (el) el.classList.add('active');
@@ -486,17 +509,29 @@
             <td class="num">$${money(s.totalMarketValue)}</td>
             <td class="num">$${money(s.cashBalance)}</td>
             <td class="num ${pnlClass(s.unrealizedPnl)}">$${money(s.unrealizedPnl)}</td>`;
-          tr.onclick = () => loadPortfolio(p.id, p.name, s);
+          tr.onclick = () => selectPortfolioRow(p.id, p.name, s, tr);
           tbody.appendChild(tr);
         }
-        if (portfolios.length) loadPortfolio(portfolios[0].id, portfolios[0].name);
-        else {
+        if (portfolios.length) {
+          const keep = portfolios.find(p => p.id === selectedPortfolioId);
+          const target = keep || portfolios[0];
+          const rows = tbody.querySelectorAll('tr');
+          const index = portfolios.findIndex(p => p.id === target.id);
+          selectPortfolioRow(target.id, target.name, null, rows[index]);
+        } else {
           document.getElementById('holdings').innerHTML = '';
           document.getElementById('transactions').innerHTML = '';
         }
       } catch (e) {
         showError(e.message);
       }
+    }
+
+    function selectPortfolioRow(id, name, summary, row) {
+      selectedPortfolioId = id;
+      document.querySelectorAll('#portfolios tr').forEach(r => r.classList.remove('selected'));
+      if (row) row.classList.add('selected');
+      loadPortfolio(id, name, summary);
     }
 
     async function loadPortfolio(id, name, summary) {
