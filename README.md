@@ -9,59 +9,43 @@ The MVP covers investors/advisers, portfolios, holdings, transactions, and portf
 - `api`: Spring Boot backend (Flyway uses `api/src/main/resources/db/migration`)
 - `client-delphi/src`: Delphi VCL skeleton client
 
-## Windows setup on D: drive (recommended if C: is low on space)
+## Quick start (Docker)
 
-This project can run with all dev tools stored on `D:\dev` and `D:\PostgreSQL`.
+The only requirement is Docker with Compose. From the repository root:
 
-### Installed locations
-
-| Tool | Path |
-|------|------|
-| JDK 17 | `D:\dev\jdk-17.0.19+10` |
-| Maven 3.9.9 | `D:\dev\apache-maven-3.9.9` |
-| Maven cache | `D:\dev\.m2\repository` |
-| PostgreSQL 17 (portable) | `D:\PostgreSQL\17` |
-
-### Environment variables (user)
-
-- `JAVA_HOME` = `D:\dev\jdk-17.0.19+10`
-- `MAVEN_HOME` = `D:\dev\apache-maven-3.9.9`
-- `MAVEN_OPTS` = `-Dmaven.repo.local=D:\dev\.m2\repository`
-- Add to `Path`: `%JAVA_HOME%\bin` and `%MAVEN_HOME%\bin`
-
-Open a **new terminal** after changing env vars.
-
-### Start PostgreSQL (before API)
-
-```powershell
-D:\dev\start-postgres.bat
+```shell
+docker compose up --build
 ```
 
-Stop when finished:
+This starts PostgreSQL and the API, and Flyway applies the schema and seed data on first run. Once it's up, open **http://localhost:8080/dashboard/index.html** and enter API key `dev-investledger-key`.
 
-```powershell
-D:\dev\stop-postgres.bat
-```
+Stop with `docker compose down`. Add `-v` to also delete the database and start fresh next time.
 
-Database: `investledger`  
-User/password: `postgres` / `postgres`
+To use a different API key, set `INVESTLEDGER_API_KEY` before starting. Compose is for local development: it uses default database credentials and only accepts connections from your own machine.
 
-## Database (PostgreSQL)
+## Manual setup (without Docker)
+
+Install these anywhere, and make sure `java` and `mvn` are on your `PATH`:
+
+- Java 17+
+- Maven 3.9+
+- PostgreSQL 14+
+
+To keep Maven's download cache on another drive, set `MAVEN_OPTS` to `-Dmaven.repo.local=<path-to-cache>`.
 
 ### 1) Create database
+
+With PostgreSQL running:
 
 ```sql
 CREATE DATABASE investledger;
 ```
 
+The API connects to `localhost:5432` as `postgres` / `postgres` by default. To change that, set `SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME` and `SPRING_DATASOURCE_PASSWORD`.
+
 ### 2) Schema + seed files
 
-Files:
-- `V1__init_schema.sql`
-- `V2__summary_views.sql`
-- `V3__seed_data.sql`
-
-Flyway runs them automatically when the API starts.
+Migrations are in `api/src/main/resources/db/migration`. Flyway runs them automatically when the API starts.
 
 ## What this solves (beyond a student demo)
 
@@ -97,26 +81,14 @@ After starting the API, open in a browser:
 
 Enter API key `dev-investledger-key` (local default), click **Refresh**, and pick an adviser to demo scoped access. The dashboard never loads the key from the server, so deployed instances require the key configured for that environment.
 
-## Spring Boot API (Windows-Friendly)
-
-### Prerequisites
-
-- Java 17+
-- Maven 3.9+
-- PostgreSQL 14+
-
-### Configure connection
-
-Update `api/src/main/resources/application.yml` if needed:
-- URL: `jdbc:postgresql://localhost:5432/investledger`
-- username/password
+## Spring Boot API
 
 ### Run API
 
-From PowerShell:
+Skip this if you're using Docker. Otherwise, after completing the manual setup:
 
-```powershell
-cd .\api
+```shell
+cd api
 mvn spring-boot:run
 ```
 
@@ -161,7 +133,16 @@ Set `api-key` to blank to disable auth (useful for local experiments only).
 - `POST /api/portfolios/{id}/transactions` — create transaction
 - `PUT /api/portfolios/{id}/transactions/{transactionId}` — update transaction
 
-Example create portfolio:
+Example create portfolio (macOS/Linux):
+
+```shell
+curl -X POST http://localhost:8080/api/portfolios \
+  -H "X-API-Key: dev-investledger-key" \
+  -H "Content-Type: application/json" \
+  -d '{"investorId":1,"name":"New Portfolio","currency":"AUD","status":"ACTIVE"}'
+```
+
+Windows PowerShell:
 
 ```powershell
 Invoke-RestMethod -Method Post -Uri http://localhost:8080/api/portfolios `
@@ -172,8 +153,8 @@ Invoke-RestMethod -Method Post -Uri http://localhost:8080/api/portfolios `
 
 ### Run tests
 
-```powershell
-cd .\api
+```shell
+cd api
 mvn test
 ```
 
