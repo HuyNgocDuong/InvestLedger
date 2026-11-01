@@ -95,7 +95,7 @@ After starting the API, open in a browser:
 
 **http://localhost:8080/dashboard/index.html**
 
-Use API key `dev-investledger-key` and pick an adviser to demo scoped access.
+Enter API key `dev-investledger-key` (local default), click **Refresh**, and pick an adviser to demo scoped access. The dashboard never loads the key from the server, so deployed instances require the key configured for that environment.
 
 ## Spring Boot API (Windows-Friendly)
 
@@ -138,6 +138,8 @@ investledger:
 ```
 
 Set `api-key` to blank to disable auth (useful for local experiments only).
+
+`dev-investledger-key` is public and for local development only. Deployed instances must set `INVESTLEDGER_API_KEY` to a long random value, and that value must never be served to clients or committed.
 
 ### Useful endpoints
 
@@ -185,7 +187,7 @@ mvn test
 
 1. Open `client-delphi/src/InvestLedgerClient.dpr` in Delphi.
 2. Build and Run.
-3. Enter API key (`dev-investledger-key` by default) and click **Refresh**.
+3. If the client connects to the deployed API, enter its API key and click **Refresh**. If it falls back to `http://localhost:8080`, it uses `dev-investledger-key` and loads automatically.
 
 The main form shows four grids:
 - **Investors** (top-left) — select a row to load portfolios

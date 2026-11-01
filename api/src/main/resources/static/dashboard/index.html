@@ -331,7 +331,7 @@
     </div>
     <div class="control-group">
       <label class="field-label" for="apiKey">API key</label>
-      <input id="apiKey" type="password" placeholder="X-API-Key" value="" />
+      <input id="apiKey" type="password" placeholder="X-API-Key" value="" onkeydown="if (event.key === 'Enter') loadInvestors()" />
       <label class="field-label" for="adviserId">Adviser</label>
       <select id="adviserId" onchange="onAdviserChange()">
         <option value="">All investors (admin)</option>
@@ -415,6 +415,7 @@
 
     async function api(path) {
       const res = await fetch(baseUrl + path, { headers: headers() });
+      if (res.status === 401) throw new Error('Invalid or missing API key');
       if (!res.ok) throw new Error(`${path} failed (${res.status})`);
       if (res.status === 204) return null;
       return res.json();
@@ -580,22 +581,7 @@
       }
     }
 
-    async function initDashboard() {
-      try {
-        const cfg = await fetch('/dashboard/config.json').then(r => r.json());
-        if (cfg.apiKey) {
-          document.getElementById('apiKey').value = cfg.apiKey;
-        }
-      } catch (e) {
-        // Local dev fallback if config endpoint unavailable
-        if (!document.getElementById('apiKey').value) {
-          document.getElementById('apiKey').value = 'dev-investledger-key';
-        }
-      }
-      loadInvestors();
-    }
-
-    initDashboard();
+    document.getElementById('status').textContent = 'Enter API key to load data';
   </script>
 </body>
 </html>

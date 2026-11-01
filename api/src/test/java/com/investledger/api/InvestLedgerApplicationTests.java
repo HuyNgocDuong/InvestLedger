@@ -1,14 +1,41 @@
 package com.investledger.api;
 
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.not;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.web.servlet.MockMvc;
 
 @SpringBootTest
+@AutoConfigureMockMvc
 @ActiveProfiles("test")
 class InvestLedgerApplicationTests {
 
+    @Autowired private MockMvc mockMvc;
+
     @Test
     void contextLoads() {
+    }
+
+    @Test
+    void anonymousRequestsCannotFetchApiKey() throws Exception {
+        mockMvc.perform(get("/dashboard/config.json"))
+                .andExpect(status().isNotFound())
+                .andExpect(content().string(not(containsString("test-api-key"))));
+    }
+
+    @Test
+    void dashboardPageShipsWithoutApiKey() throws Exception {
+        mockMvc.perform(get("/dashboard/index.html"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(not(containsString("dev-investledger-key"))))
+                .andExpect(content().string(not(containsString("config.json"))));
     }
 }
